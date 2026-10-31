@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ações de Pátio</title>
+<style>
+:root{--bg:#f4f5f7;--cd:#fff;--tx:#1b1f24;--mu:#5d6773;--bd:#dde1e6;--ac:#1d5fd1;--ab:#e4edfc;--ok:#1e8e4e;--nk:#d33a2c;--rt:#d98a00}
+@media (prefers-color-scheme:dark){:root{--bg:#14171b;--cd:#1d2127;--tx:#eceff3;--mu:#9aa4b0;--bd:#2d333b;--ac:#6ea3ff;--ab:#1f2d47}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.4;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+.w{max-width:760px;margin:0 auto;padding:14px}
+h1{font-size:1.25rem;margin:0}h2{font-size:1.05rem;margin:0 0 4px}
+.hd{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.nm{font-size:.8rem;color:var(--mu);background:none;border:0;text-decoration:underline;cursor:pointer}
+.tbs{display:flex;gap:8px;margin:12px 0}
+.tb,.sb{flex:1;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--cd);color:var(--tx);font-size:.95rem;cursor:pointer}
+.tb.on,.sb.on{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
+.cd{background:var(--cd);border:1px solid var(--bd);border-radius:12px;padding:13px;margin-bottom:10px}
+.cd.k{cursor:pointer}
+.mu{color:var(--mu);font-size:.88rem}
+.tg{display:inline-block;font-size:.74rem;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--ab);color:var(--ac);margin-right:6px}
+.tg.OK{background:var(--ok);color:#fff}.tg.NOK{background:var(--nk);color:#fff}.tg.Retrabalho{background:var(--rt);color:#fff}
+.bar{height:8px;border-radius:5px;background:var(--bd);margin-top:8px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ok)}
+input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--cd);color:var(--tx);font-size:1rem;font-family:inherit}
+label{display:block;font-size:.83rem;color:var(--mu);margin:12px 0 4px}
+.bt{padding:11px 14px;border:1px solid var(--bd);border-radius:10px;background:var(--cd);color:var(--tx);font-size:.95rem;cursor:pointer}
+.bt.p{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
+.row{display:flex;gap:8px;align-items:center}.row>input{flex:1}
+.ax{display:inline-block;margin:8px 8px 0 0;padding:8px 12px;border-radius:10px;background:var(--ab);color:var(--ac);font-weight:600;font-size:.86rem;text-decoration:none}
+.it{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.vs{font-family:ui-monospace,Menlo,monospace;font-weight:700;font-size:.98rem}
+.sm{padding:7px 10px;font-size:.82rem}
+#ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9;padding:16px;overflow:auto}
+#ov.on{display:block}.bx{max-width:420px;margin:8vh auto 0;background:var(--bg);border-radius:14px;padding:18px}
+.big{display:block;width:100%;padding:16px;margin-top:10px;border:0;border-radius:12px;color:#fff;font-size:1.1rem;font-weight:700;cursor:pointer}
+#tt{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:#222;color:#fff;padding:10px 16px;border-radius:20px;font-size:.9rem;display:none;z-index:20}
+video{width:100%;border-radius:12px;background:#000}
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="hd"><h1>Ações de Pátio</h1><button class="nm" id="nm" type="button"></button></div>
+  <div class="tbs"><button class="tb" id="t1" type="button">Ações</button><button class="tb" id="t2" type="button">Lançamentos</button></div>
+  <div id="app"></div>
+</div>
+<div id="ov"><div class="bx" id="bx"></div></div>
+<div id="tt"></div>
+<script>
+/* COLE AQUI a URL do aplicativo da web gerada no Apps Script (termina em /exec) */
+var API="https://script.google.com/macros/s/AKfycbxTXlh4xGIlBG64_F5cz-UCPBEhclJ7mVwJgxvlbC9UhpFFswXpSf148zJRc8po2BvokQ/exec";
+var VAGA=/^P([A-Z])-([A-Z])([A-Z])-(\d+)$/;
+var S={acoes:[],id:null,d:null,sub:"fazer",aba:"acoes",pin:sessionStorage.getItem("pin")||"",nome:localStorage.getItem("nome")||""};
+function $(i){return document.getElementById(i);}
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
+function toast(m){var t=$("tt");t.textContent=m;t.style.display="block";clearTimeout(toast.k);toast.k=setTimeout(function(){t.style.display="none"},2600);}
+function vagaTxt(v){var m=VAGA.exec(v||"");return m?"Pátio "+m[1]+" · Rua "+m[2]+" · Vaga "+m[3]+" · nº "+m[4]:(v||"sem vaga");}
+function api(op,p){p=p||{};p.op=op;if(S.pin)p.pin=S.pin;
+ return fetch(API,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(p)}).then(function(r){return r.json();}).catch(function(){toast("Sem conexão com o servidor");return {erro:"rede"};});}
+function modal(on){$("ov").className=on?"on":"";if(!on)$("bx").textContent="";}
+function nome(){if(!S.nome){S.nome=(prompt("Seu nome:")||"").trim();if(S.nome)localStorage.setItem("nome",S.nome);}$("nm").textContent=S.nome?"Você: "+S.nome+" (trocar)":"Informar nome";return S.nome;}
+$("nm").onclick=function(){S.nome="";nome();};
+$("t1").onclick=function(){S.aba="acoes";S.id=null;carregar();};
+$("t2").onclick=function(){S.aba="lanc";carregar();};
+function carregar(){api("list",{todas:S.aba==="lanc"}).then(function(r){if(r.acoes)S.acoes=r.acoes;else if(r.erro)toast(r.erro);render();});}
+function render(){
+ var a=$("app");a.textContent="";
+ $("t1").className="tb"+(S.aba==="acoes"?" on":"");$("t2").className="tb"+(S.aba==="lanc"?" on":"");
+ if(API.indexOf("COLE_AQUI")===0){a.appendChild(el("div","cd","Falta configurar: edite o index.html e cole a URL do Apps Script na variável API."));return;}
+ if(S.aba==="lanc")return lanc(a);
+ if(S.id)return detalhe(a);
+ lista(a);
+}
+function midias(box,ms){(ms||[]).forEach(function(m){var a=el("a","ax",(m.tipo==="Vídeo"?"▶ ":m.tipo==="Foto"?"🖼 ":m.tipo==="PDF"?"📄 ":"📎 ")+(m.n||m.tipo));a.href=m.url;a.target="_blank";a.rel="noopener noreferrer";box.appendChild(a);});}
+function lista(a){
+ if(!S.acoes.length){a.appendChild(el("div","cd mu","Nenhuma ação lançada ainda."));return;}
+ S.acoes.forEach(function(x){
+  var c=el("div","cd k"),t=el("div");t.appendChild(el("span","tg",x.id));t.appendChild(el("b","",x.titulo));c.appendChild(t);
+  if(x.descricao)c.appendChild(el("div","mu",x.descricao));
+  var pr=el("div","mu",x.semLista?x.feitos+" carros feitos":x.feitos+" de "+x.total+" feitos"+(x.naoVaga?" · "+x.naoVaga+" não vaga":""));pr.style.marginTop="6px";c.appendChild(pr);
+  if(!x.semLista&&x.total){var b=el("div","bar"),i=el("i");i.style.width=Math.round(100*x.feitos/x.total)+"%";b.appendChild(i);c.appendChild(b);}
+  c.onclick=function(){S.id=x.id;S.sub="fazer";api("get",{acao:x.id}).then(function(r){if(r.erro){toast(r.erro);return;}S.d=r;render();});};
+  a.appendChild(c);
+ });
+}
+function refresh(){if(!S.id)return;api("get",{acao:S.id}).then(function(r){if(r.carros&&S.id){S.d=r;render();}});}
+function ord(x,y){return (x.vaga||"~").localeCompare(y.vaga||"~")||x.vis.localeCompare(y.vis);}
+function detalhe(a){
+ var d=S.d,ac=d.acao,cs=d.carros;
+ var vb=el("button","bt","← Voltar");vb.onclick=function(){S.id=null;S.d=null;carregar();};a.appendChild(vb);
+ var h=el("div","cd");h.style.marginTop="10px";h.appendChild(el("span","tg",ac.id));h.appendChild(el("b","",ac.titulo));
+ if(ac.descricao)h.appendChild(el("div","mu",ac.descricao));midias(h,ac.midia);a.appendChild(h);
+ var sb=el("div","cd"),r=el("div","row"),inp=el("input");inp.id="vis";inp.placeholder="Bipar ou digitar o VIS";inp.autocapitalize="characters";inp.autocomplete="off";
+ inp.onkeydown=function(e){if(e.key==="Enter"){var v=inp.value;inp.value="";bipar(v);}};
+ var cb=el("button","bt","📷");cb.onclick=camera;r.appendChild(inp);r.appendChild(cb);sb.appendChild(r);a.appendChild(sb);
+ var fz=cs.filter(function(c){return !c.status;}).sort(ord),fe=cs.filter(function(c){return ["OK","NOK","Retrabalho"].indexOf(c.status)>=0;}).sort(function(x,y){return (y.quando||"").localeCompare(x.quando||"");}),nv=cs.filter(function(c){return c.status==="Não Vaga";}).sort(ord);
+ var tb=el("div","tbs");[["fazer","A fazer ("+fz.length+")"],["feitos","Feitos ("+fe.length+")"],["nv","Não vaga ("+nv.length+")"]].forEach(function(s){var b=el("button","sb"+(S.sub===s[0]?" on":""),s[1]);b.onclick=function(){S.sub=s[0];render();};tb.appendChild(b);});a.appendChild(tb);
+ var L=S.sub==="fazer"?fz:S.sub==="feitos"?fe:nv;
+ if(!L.length)a.appendChild(el("div","cd mu",S.sub==="fazer"&&ac.semLista?"Esta ação não tem lista de VIS. Bipe os carros e eles entram em Feitos.":"Nenhum carro aqui."));
+ L.forEach(function(c){
+  var cd=el("div","cd it"),l=el("div");l.appendChild(el("div","vs",c.vis));l.appendChild(el("div","mu",vagaTxt(c.vaga)));
+  if(c.status&&c.status!=="Não Vaga"){var s=el("div");s.style.marginTop="4px";s.appendChild(el("span","tg "+c.status,c.status));s.appendChild(el("span","mu",(c.por||"")+" · "+(c.quando?new Date(c.quando).toLocaleString("pt-BR"):"")));l.appendChild(s);}
+  cd.appendChild(l);
+  var bt=el("button","bt sm",S.sub==="fazer"?"Não vaga":S.sub==="feitos"?"Desfazer":"Voltar p/ fazer");
+  bt.onclick=function(){if(!nome())return;api(S.sub==="fazer"?"naovaga":"reset",{acao:S.id,vis:c.vis,por:S.nome}).then(function(x){if(x.erro)toast(x.erro);refresh();});};
+  cd.appendChild(bt);a.appendChild(cd);
+ });
+ if(window.matchMedia&&matchMedia("(pointer:fine)").matches&&!$("ov").className)inp.focus();
+}
+function bipar(v){
+ v=(v||"").trim().toUpperCase();if(!v||!nome())return;
+ var c=S.d.carros.filter(function(x){return x.vis===v;})[0],bx=$("bx");bx.textContent="";
+ bx.appendChild(el("div","vs",v));bx.appendChild(el("div","mu",c?vagaTxt(c.vaga):"Fora da lista desta ação"));
+ if(c&&c.status)bx.appendChild(el("div","mu","Já registrado como "+c.status+". Escolher outro altera o registro."));
+ [["Carro OK","OK","#1e8e4e"],["Carro NOK","NOK","#d33a2c"],["Retrabalho","Retrabalho","#d98a00"]].forEach(function(o){var b=el("button","big",o[0]);b.style.background=o[2];b.onclick=function(){modal(false);gravar(v,o[1],false);};bx.appendChild(b);});
+ var x=el("button","bt","Cancelar");x.style.cssText="width:100%;margin-top:12px";x.onclick=function(){modal(false);};bx.appendChild(x);modal(true);
+}
+function gravar(v,st,force){api("scan",{acao:S.id,vis:v,status:st,por:S.nome,force:force}).then(function(r){
+ if(r.erro==="fora_da_lista"){if(confirm("O VIS "+v+" não está na lista desta ação. Adicionar mesmo assim?"))gravar(v,st,true);return;}
+ if(r.erro){toast(r.erro);return;}toast(v+" → "+st);refresh();});}
+function camera(){
+ if(!("BarcodeDetector" in window)){toast("Câmera não suportada neste navegador. Use o leitor ou digite o VIS.");return;}
+ var bx=$("bx");bx.textContent="";var v=el("video");v.setAttribute("playsinline","");v.muted=true;bx.appendChild(v);
+ var x=el("button","bt","Fechar");x.style.cssText="width:100%;margin-top:12px";bx.appendChild(x);modal(true);
+ var on=true,st,det=new BarcodeDetector();
+ function fim(){on=false;if(st)st.getTracks().forEach(function(t){t.stop();});modal(false);}
+ x.onclick=fim;
+ navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(function(s){st=s;v.srcObject=s;v.play();
+  (function lp(){if(!on)return;det.detect(v).then(function(cs){if(cs.length){var val=cs[0].rawValue;fim();bipar(val);}else setTimeout(lp,250);}).catch(function(){setTimeout(lp,400);});})();
+ }).catch(function(){fim();toast("Sem permissão para usar a câmera");});
+}
+function parse(t){var o=[],bad=0;t.split(/\n/).forEach(function(l){var p=l.trim().split(/[;,\t ]+/);if(!p[0])return;var vg=(p[1]||"").toUpperCase();if(vg&&!VAGA.test(vg))bad++;o.push({vis:p[0].toUpperCase(),vaga:vg});});return {l:o,bad:bad};}
+function lanc(a){
+ if(!S.pin){var c=el("div","cd");c.appendChild(el("label","","Senha do administrador"));var i=el("input");i.type="password";c.appendChild(i);
+  var b=el("button","bt p","Entrar");b.style.marginTop="12px";b.onclick=function(){S.pin=i.value;api("ping").then(function(r){if(r.ok){sessionStorage.setItem("pin",S.pin);carregar();}else{S.pin="";toast("PIN incorreto");}});};c.appendChild(b);a.appendChild(c);return;}
+ var f=el("div","cd");f.appendChild(el("h2","","Lançar nova ação"));
+ function campo(l,t,id){f.appendChild(el("label","",l));var e=el(t);e.id=id;f.appendChild(e);return e;}
+ campo("Código da ação (ex.: 389-2026)","input","l-c");campo("Título (ex.: Teste e troca do sensor do turbo)","input","l-t");campo("Descrição / gama (texto)","textarea","l-d").rows=3;
+ f.appendChild(el("label","","Imagem, foto, PDF ou vídeo da gama (até 15 MB cada)"));var fi=el("input");fi.type="file";fi.multiple=true;fi.id="l-f";f.appendChild(fi);
+ f.appendChild(el("label","","Ou link de vídeo/arquivo"));var u=el("input");u.id="l-u";u.type="url";u.placeholder="https://…";f.appendChild(u);
+ f.appendChild(el("label","","Lista de VIS e vagas (uma por linha: VIS VAGA, ex.: 9BWZZZ377VT004251 PE-AB-120)"));var v=el("textarea");v.id="l-v";v.rows=6;f.appendChild(v);
+ var lb=el("label","","");var sm=el("input");sm.type="checkbox";sm.id="l-s";sm.style.cssText="width:auto;margin-right:8px";lb.appendChild(sm);lb.appendChild(document.createTextNode("Sem lista (VIS ficam em papel; os carros bipados entram em Feitos)"));f.appendChild(lb);
+ var go=el("button","bt p","Lançar ação");go.style.cssText="width:100%;margin-top:14px";go.onclick=function(){lancar(go);};f.appendChild(go);a.appendChild(f);
+ var g=el("div","cd");g.appendChild(el("h2","","Ações lançadas"));
+ S.acoes.forEach(function(x){var r=el("div","it");r.style.marginTop="10px";r.appendChild(el("div","",x.id+" · "+x.titulo+(x.ativa?"":" (encerrada)")));
+  var b1=el("button","bt sm","+ carros");b1.onclick=function(){addcar(x.id);};var b2=el("button","bt sm",x.ativa?"Encerrar":"Reabrir");b2.onclick=function(){api("ativa",{acao:x.id,ativa:!x.ativa}).then(carregar);};
+  var q=el("div","row");q.appendChild(b1);q.appendChild(b2);r.appendChild(q);g.appendChild(r);});
+ a.appendChild(g);
+}
+function addcar(id){var bx=$("bx");bx.textContent="";bx.appendChild(el("h2","","Acrescentar carros à ação "+id));var t=el("textarea");t.rows=8;t.placeholder="VIS VAGA (uma por linha)";bx.appendChild(t);
+ var b=el("button","bt p","Acrescentar");b.style.cssText="width:100%;margin-top:12px";b.onclick=function(){var p=parse(t.value);if(p.bad&&!confirm(p.bad+" vaga(s) fora do formato PE-AB-120. Continuar?"))return;api("addvis",{acao:id,lista:p.l}).then(function(r){toast(r.erro||(r.novos+" carros novos"));modal(false);carregar();});};
+ bx.appendChild(b);var x=el("button","bt","Cancelar");x.style.cssText="width:100%;margin-top:8px";x.onclick=function(){modal(false);};bx.appendChild(x);modal(true);}
+function b64(f){return new Promise(function(ok,no){var r=new FileReader();r.onload=function(){ok(String(r.result).split(",")[1]);};r.onerror=no;r.readAsDataURL(f);});}
+async function lancar(go){
+ var id=$("l-c").value.trim(),t=$("l-t").value.trim();if(!id||!t){toast("Informe código e título");return;}
+ var p=parse($("l-v").value);if(p.bad&&!confirm(p.bad+" vaga(s) fora do formato PE-AB-120. Continuar?"))return;
+ var fs=$("l-f").files,m=[],k,u=$("l-u").value.trim();go.disabled=true;
+ for(k=0;k<fs.length;k++){if(fs[k].size>15*1024*1024){toast(fs[k].name+" passa de 15 MB. Use o link.");go.disabled=false;return;}}
+ for(k=0;k<fs.length;k++){toast("Enviando arquivo "+(k+1)+" de "+fs.length+"…");var r=await api("upload",{nome:fs[k].name,mime:fs[k].type||"application/octet-stream",data:await b64(fs[k])});if(r.erro){toast(r.erro);go.disabled=false;return;}m.push({n:r.n,tipo:r.tipo,url:r.url});}
+ if(u)m.push({n:"Link",tipo:/youtu|vimeo|\.mp4/i.test(u)?"Vídeo":"Arquivo",url:u});
+ var r2=await api("criar",{id:id,titulo:t,desc:$("l-d").value.trim(),midia:m,semLista:$("l-s").checked,lista:p.l});
+ go.disabled=false;if(r2.erro){toast(r2.erro);return;}toast("Ação "+id+" lançada");carregar();
+}
+nome();render();carregar();setInterval(function(){if(S.id&&!$("ov").className)refresh();},15000);
+</script>
+</body>
+</html>
